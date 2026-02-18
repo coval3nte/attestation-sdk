@@ -25,6 +25,7 @@
 #include <sstream>
 #include <set>
 
+#include <libxml/xmlversion.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xmlschemas.h>
@@ -61,7 +62,12 @@ Error RimDocument::create_from_rim_data(const std::string &rim_data, RimDocument
     //    TCG from CORIM
     auto doc = nv_unique_ptr<xmlDoc>(xmlReadDoc(reinterpret_cast<const xmlChar *>(rim_data.c_str()), NULL, NULL, XML_PARSE_PEDANTIC | XML_PARSE_NONET));
     if (!doc) {
+        // https://github.com/GNOME/libxml2/blob/ab7693ab4a24480e0f3a4c7ed1fcbf490a36c38c/CMakeLists.txt#L108
+#if LIBXML_VERSION >= 20102
+        const xmlError* xml_error = xmlGetLastError();
+#else
         xmlErrorPtr xml_error = xmlGetLastError();
+#endif
         std::string error_msg = "Failed to parse RIM data as TCG XML file. ";
         if (xml_error != nullptr) {
             error_msg += "XML error: " + std::string(xml_error->message);
